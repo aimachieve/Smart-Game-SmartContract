@@ -28,11 +28,24 @@ import {
 import WinLoseModal from './WinLoseModal'
 
 import { config } from '../../../utils/config.js'
-// import { ethers } from 'ethers'
+// import EtherTx from 'ethereumjs-tx'
+// import { ethers } from 'ethers' 
 
 const Flip = ({ isAuthenticated, login }) => {
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
+  const Tx = require("ethereumjs-tx").Transaction
+  const Common = require('ethereumjs-common').default
+  const BSC_FORK = Common.forCustomChain(
+    'mainnet',
+    {
+      name: 'Binance Smart Chain Test Net',
+      networkId: 97,
+      chainId: 97,
+      url: 'https://data-seed-prebsc-1-s1.binance.org:8545'
+    },
+    'istanbul',
+  );
   console.log('isAuthenticated:', isAuthenticated)
 
   //State variables
@@ -40,12 +53,13 @@ const Flip = ({ isAuthenticated, login }) => {
   const [selected, setSelected] = useState('HEADS')
   const [betType, setBetType] = useState('HEADS')
   const [betAmount, setBetAmount] = useState(0.05)
-  const [isWin, setIsWin] = useState('')
+  const [isWin, setIsWin] = useState(0)
   const [open, setOpen] = React.useState(false)
 
   // For smart contract
   const [web3, setWeb3] = useState(undefined);
   const [contract, setContract] = useState(undefined);
+  const [nonce, setNonce] = useState(undefined);
 
   useEffect(() => {
     async function fetchData() {
@@ -56,13 +70,44 @@ const Flip = ({ isAuthenticated, login }) => {
       // Connect Wallet
       const { address } = await getCurrentWalletConnected()
 
+      // Get Nonce
+      const count = await web3.eth.getTransactionCount(config.owner)
+
       // Set states
       setWeb3(web3)
       setContract(contract)
       setWallet(address)
+      setNonce(count)
     }
     fetchData()
-  }, [])
+
+    if (isWin) {
+      console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
+
+      const privateKey = Buffer.from(config.owner_privatekey, 'hex')
+
+      const rawTx = {
+        nonce: web3.utils.toHex(nonce),
+        gasPrice: web3.utils.toHex(10000000000),
+        gasLimit: web3.utils.toHex(300000),
+        from: config.owner,
+        to: walletAddress,
+        value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
+      }
+      console.log(web3.utils.toHex(nonce), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
+
+      const tx = new Tx(rawTx, { 'common': BSC_FORK });
+      tx.sign(privateKey);
+
+      const serializedTx = tx.serialize();
+
+      console.log(serializedTx.toString('hex'));
+
+      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+        .on('receipt', console.log);
+    }
+  }, [isWin])
+
 
   // Connect Wallet
   const connectWalletPressed = async () => {
@@ -169,10 +214,13 @@ const Flip = ({ isAuthenticated, login }) => {
   const startBet = () => {
     console.log('web3:', web3)
     // parseFloat(ethers.utils.formatEther(betAmount) )  betAmount * 10 ** 10
+    // console.log()
     contract.methods.Bet(config.owner, web3.utils.toWei(betAmount.toString(), 'ether')).send({
-      from: walletAddress
+      from: walletAddress,
+      value: web3.utils.toWei(betAmount.toString(), 'ether')
     })
-      .on('receipt', () => {
+      .on('receipt', async () => {
+        console.log('receipt=>')
         let currentType = ''
         if (Math.random() <= 0.5) {
           setBetType('HEADS')
@@ -182,16 +230,37 @@ const Flip = ({ isAuthenticated, login }) => {
           currentType = 'TAILS'
         }
 
+        ///////////////////////
+        // console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
+
+        // const privateKey = Buffer.from(config.owner_privatekey, 'hex')
+        // const count = await getNonce()
+        // const rawTx = {
+        //   nonce: web3.utils.toHex(count),
+        //   gasPrice: web3.utils.toHex(100000000000),
+        //   gasLimit: web3.utils.toHex(300000),
+        //   from: config.owner,
+        //   to: walletAddress,
+        //   value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
+        // }
+        // console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
+
+        // const tx = new Tx(rawTx, { 'common': BSC_FORK });
+        // tx.sign(privateKey);
+
+        // const serializedTx = tx.serialize();
+
+        // console.log("[count]=>", count);
+
+        // web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+        //   .on('receipt', console.log);
+        //////////////
+
+
         if (selected === currentType) {
           setIsWin(1)
-
-          web3.eth.accounts.signTransaction({
-            to: '0xe77568f93a5E9773d47A041457f597e476dB0A1B',
-            value: web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'),
-            gas: 2000000
-          }, config.owner_privatekey)
         } else {
-          setIsWin(0)
+          setIsWin(1)
         }
         handleClickOpen()
       })

@@ -16,6 +16,7 @@
     "@testing-library/user-event": "^12.1.10",
     "axios": "^0.22.0",
     "caniuse-lite": "^1.0.30001280",
+    "ethereumjs-tx": "^2.1.2",
     "ethers": "^5.5.1",
     "jquery": "^3.6.0",
     "prop-types": "^15.7.2",
