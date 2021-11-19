@@ -59,7 +59,7 @@ const Flip = ({ isAuthenticated, login }) => {
   // For smart contract
   const [web3, setWeb3] = useState(undefined);
   const [contract, setContract] = useState(undefined);
-  const [nonce, setNonce] = useState(undefined);
+  // const [nonce, setNonce] = useState(undefined);
 
   useEffect(() => {
     async function fetchData() {
@@ -71,43 +71,48 @@ const Flip = ({ isAuthenticated, login }) => {
       const { address } = await getCurrentWalletConnected()
 
       // Get Nonce
-      const count = await web3.eth.getTransactionCount(config.owner)
+      // const count = await web3.eth.getTransactionCount(config.owner)
 
       // Set states
       setWeb3(web3)
       setContract(contract)
       setWallet(address)
-      setNonce(count)
+      // setNonce(count)
     }
     fetchData()
 
-    if (isWin) {
-      console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
+    // if (isWin === 1) {
+    //   console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
 
-      const privateKey = Buffer.from(config.owner_privatekey, 'hex')
+    //   const privateKey = Buffer.from(config.owner_privatekey, 'hex')
 
-      const rawTx = {
-        nonce: web3.utils.toHex(nonce),
-        gasPrice: web3.utils.toHex(10000000000),
-        gasLimit: web3.utils.toHex(300000),
-        from: config.owner,
-        to: walletAddress,
-        value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
-      }
-      console.log(web3.utils.toHex(nonce), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
+    //   const rawTx = {
+    //     nonce: web3.utils.toHex(nonce),
+    //     gasPrice: web3.utils.toHex(10000000000),
+    //     gasLimit: web3.utils.toHex(300000),
+    //     from: config.owner,
+    //     to: walletAddress,
+    //     value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
+    //   }
+    //   console.log(web3.utils.toHex(nonce), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
 
-      const tx = new Tx(rawTx, { 'common': BSC_FORK });
-      tx.sign(privateKey);
+    //   const tx = new Tx(rawTx, { 'common': BSC_FORK });
+    //   tx.sign(privateKey);
 
-      const serializedTx = tx.serialize();
+    //   const serializedTx = tx.serialize();
 
-      console.log(serializedTx.toString('hex'));
+    //   console.log(serializedTx.toString('hex'));
 
-      web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
-        .on('receipt', console.log);
-    }
-  }, [isWin])
+    //   web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+    //     .on('receipt', console.log);
 
+    //     setIsWin(2)
+    // }
+  }, [])
+
+  const getNonce = async () => {
+    return await web3.eth.getTransactionCount(config.owner)
+  }
 
   // Connect Wallet
   const connectWalletPressed = async () => {
@@ -259,6 +264,29 @@ const Flip = ({ isAuthenticated, login }) => {
 
         if (selected === currentType) {
           setIsWin(1)
+          console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
+
+          const privateKey = Buffer.from(config.owner_privatekey, 'hex')
+          const count = await getNonce()
+          const rawTx = {
+            nonce: web3.utils.toHex(count),
+            gasPrice: web3.utils.toHex(100000000000),
+            gasLimit: web3.utils.toHex(300000),
+            from: config.owner,
+            to: walletAddress,
+            value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
+          }
+          console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
+
+          const tx = new Tx(rawTx, { 'common': BSC_FORK });
+          tx.sign(privateKey);
+
+          const serializedTx = tx.serialize();
+
+          console.log("[count]=>", count);
+
+          web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+            .on('receipt', console.log);
         } else {
           setIsWin(1)
         }
