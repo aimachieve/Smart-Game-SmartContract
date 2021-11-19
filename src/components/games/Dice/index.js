@@ -86,6 +86,11 @@ const Flip = ({ isAuthenticated, login }) => {
     return await web3.eth.getTransactionCount(config.owner)
   }
 
+  // Roll upper function
+   const getY = (x) => {
+    return -94.01/(x - 100)  + 0.0315
+   }
+
   // Connect Wallet
   const connectWalletPressed = async () => {
     //TODO: implement
@@ -157,8 +162,8 @@ const Flip = ({ isAuthenticated, login }) => {
 
     setValue(v_value)
     setBetChance(track === "normal" ? v_value : 100 - v_value)
-    // Roll Under: Rough Function, Roll Upper: ____ function
-    setMultiplier((99 / v_value).toFixed(4))
+    // Roll Under: Rough Function y = 99/x, Roll Upper: ____y=x/5 function
+    setMultiplier(track === "normal" ? (99 / v_value).toFixed(4) : getY(v_value).toFixed(4))
   }
 
   // Input slider value
@@ -176,7 +181,8 @@ const Flip = ({ isAuthenticated, login }) => {
 
     setValue(v_value)
     setBetChance(track === "normal" ? v_value : 100 - v_value)
-    setMultiplier((99 / v_value).toFixed(4))
+    // Roll Under: Rough Function y = 99/x, Roll Upper: ____y=x/5 function
+    setMultiplier(track === "normal" ? (99 / v_value).toFixed(4) : getY(v_value).toFixed(4))
   }
 
   // Set TextField's Color
@@ -234,7 +240,7 @@ const Flip = ({ isAuthenticated, login }) => {
           console.log('track, winvalue, value=>', track, randomValue, value)
           if (randomValue < value) {
             setIsWin(1)
-            console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
+            console.log('amount=>', web3.utils.toWei((betAmount * multiplier * 0.98).toString(), 'ether'))
 
             const privateKey = Buffer.from(config.owner_privatekey, 'hex')
             const count = await getNonce()
@@ -244,9 +250,9 @@ const Flip = ({ isAuthenticated, login }) => {
               gasLimit: web3.utils.toHex(300000),
               from: config.owner,
               to: walletAddress,
-              value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
+              value: web3.utils.toHex(web3.utils.toWei((betAmount * multiplier * 0.98).toString(), 'ether')),
             }
-            console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
+            console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * multiplier * 0.98).toString(), 'ether')).toString('hex'))
 
             const tx = new Tx(rawTx, { 'common': BSC_FORK });
             tx.sign(privateKey);
@@ -266,7 +272,7 @@ const Flip = ({ isAuthenticated, login }) => {
             console.log('track, winvalue, value=>', track, randomValue, value)
           if (randomValue > value) {
             setIsWin(1)
-            console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
+            console.log('amount=>', web3.utils.toWei((betAmount * multiplier * 0.98).toString(), 'ether'))
 
             const privateKey = Buffer.from(config.owner_privatekey, 'hex')
             const count = await getNonce()
@@ -276,9 +282,9 @@ const Flip = ({ isAuthenticated, login }) => {
               gasLimit: web3.utils.toHex(300000),
               from: config.owner,
               to: walletAddress,
-              value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
+              value: web3.utils.toHex(web3.utils.toWei((betAmount * multiplier * 0.98).toString(), 'ether')),
             }
-            console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
+            console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * multiplier * 0.98).toString(), 'ether')).toString('hex'))
 
             const tx = new Tx(rawTx, { 'common': BSC_FORK });
             tx.sign(privateKey);
@@ -303,7 +309,10 @@ const Flip = ({ isAuthenticated, login }) => {
     // setTrack(status)
     console.log(e.target.id)
     setTrack(e.target.id)
-    setBetChance(e.target.id === "normal" ? (value + ' %') : (100 - value) + " %")
+    setBetChance(e.target.id === "normal" ? (value ) : (100 - value) )
+
+    // Roll Under: Rough Function y = 99/x, Roll Upper: ____y=x/5 function
+    setMultiplier(e.target.id === "normal" ? (99 / value).toFixed(4) : getY(value).toFixed(4))
   }
 
   // Open and Close Win/Lose Modal
@@ -505,8 +514,7 @@ const Flip = ({ isAuthenticated, login }) => {
                 defaultValue={5}
                 aria-label="Small"
                 valueLabelDisplay="auto"
-                step={0.01}
-                // marks
+                marks
                 value={value}
                 onChange={sliderChange}
                 track={track}
@@ -539,7 +547,7 @@ const Flip = ({ isAuthenticated, login }) => {
                   <TextField
                     id="bet-amount"
                     type="number"
-                    value={(betAmount * multiplier).toFixed(4)}
+                    value={(betAmount * multiplier * 0.98).toFixed(4)}
                     readOnly
                     InputProps={{ readOnly: true, endAdornment: 'BNB' }}
                     sx={{
