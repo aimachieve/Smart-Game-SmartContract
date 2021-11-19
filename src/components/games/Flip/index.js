@@ -235,33 +235,6 @@ const Flip = ({ isAuthenticated, login }) => {
           currentType = 'TAILS'
         }
 
-        ///////////////////////
-        // console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
-
-        // const privateKey = Buffer.from(config.owner_privatekey, 'hex')
-        // const count = await getNonce()
-        // const rawTx = {
-        //   nonce: web3.utils.toHex(count),
-        //   gasPrice: web3.utils.toHex(100000000000),
-        //   gasLimit: web3.utils.toHex(300000),
-        //   from: config.owner,
-        //   to: walletAddress,
-        //   value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
-        // }
-        // console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
-
-        // const tx = new Tx(rawTx, { 'common': BSC_FORK });
-        // tx.sign(privateKey);
-
-        // const serializedTx = tx.serialize();
-
-        // console.log("[count]=>", count);
-
-        // web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
-        //   .on('receipt', console.log);
-        //////////////
-
-
         if (selected === currentType) {
           setIsWin(1)
           console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
@@ -288,25 +261,10 @@ const Flip = ({ isAuthenticated, login }) => {
           web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
             .on('receipt', console.log);
         } else {
-          setIsWin(1)
+          setIsWin(0)
         }
         handleClickOpen()
       })
-    // let currentType = ''
-    // if (Math.random() <= 0.5) {
-    //   setBetType('HEADS')
-    //   currentType = 'HEADS'
-    // } else {
-    //   setBetType('TAILS')
-    //   currentType = 'TAILS'
-    // }
-
-    // if (selected === currentType) {
-    //   setIsWin(1)
-    // } else {
-    //   setIsWin(0)
-    // }
-    // handleClickOpen()
   }
 
   // Open and Close Win/Lose Modal

@@ -5,7 +5,7 @@ import Dialog from '@mui/material/Dialog'
 import { makeStyles } from '@material-ui/core'
 
 function WinLoseModal(props) {
-  const { onClose, isWin, open } = props
+  const { onClose, isWin, open, value } = props
 
   const handleClose = () => {
     onClose()
@@ -14,9 +14,9 @@ function WinLoseModal(props) {
   // Set TextField's Color
   const useStyles = makeStyles({
     root: {
-      '& .css-1t1j96h-MuiPaper-root-MuiDialog-paper': {
+      '& .MuiDialog-paperScrollPaper': {
         borderRadius: '48px',
-        marginTop: '110px',
+        marginTop: '-350px',
       },
     },
   })
@@ -35,7 +35,7 @@ function WinLoseModal(props) {
           fontSize: '22px',
         }}
       >
-        {' '}
+        {value + '! '}
         {isWin ? 'YOU WON' : 'YOU LOSE'}
       </DialogTitle>
     </Dialog>

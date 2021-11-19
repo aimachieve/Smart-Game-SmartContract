@@ -15,7 +15,7 @@ function WinLoseModal(props) {
   // Set TextField's Color
 	const useStyles = makeStyles({
 		root: {
-			"& .css-1t1j96h-MuiPaper-root-MuiDialog-paper": {
+			"& .MuiDialog-paperScrollPaper": {
         borderRadius: '48px',
         marginTop: '110px'
       }

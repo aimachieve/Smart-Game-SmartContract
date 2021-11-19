@@ -23,10 +23,29 @@ import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore'
 import {
   connectWallet,
   getCurrentWalletConnected,
+  getWeb3,
+  getContract
 } from '../../../utils/interact.js'
+
+import WinLoseModal from './WinLoseModal'
+
+import { config } from '../../../utils/config.js'
 
 const Flip = ({ isAuthenticated, login }) => {
   console.log('isAuthenticated:', isAuthenticated)
+
+  const Tx = require("ethereumjs-tx").Transaction
+  const Common = require('ethereumjs-common').default
+  const BSC_FORK = Common.forCustomChain(
+    'mainnet',
+    {
+      name: 'Binance Smart Chain Test Net',
+      networkId: 97,
+      chainId: 97,
+      url: 'https://data-seed-prebsc-1-s1.binance.org:8545'
+    },
+    'istanbul',
+  );
 
   //State variables
   const [walletAddress, setWallet] = useState('')
@@ -35,16 +54,37 @@ const Flip = ({ isAuthenticated, login }) => {
   const [track, setTrack] = useState("normal")
   const [betChance, setBetChance] = useState(5)
   const [multiplier, setMultiplier] = useState(19.8)
+  const [isWin, setIsWin] = useState(0)
+  const [open, setOpen] = React.useState(false)
+  const [winValue, setWinValue] = React.useState('undefined')
+
+  // For smart contract
+  const [web3, setWeb3] = useState(undefined);
+  const [contract, setContract] = useState(undefined);
 
   useEffect(() => {
     async function fetchData() {
-      // You can await here
+      const web3 = await getWeb3()
+      const contract = await getContract()
+
+      // Connect Wallet
       const { address } = await getCurrentWalletConnected()
+
+      // Get Nonce
+      // const count = await web3.eth.getTransactionCount(config.owner)
+
+      // Set states
+      setWeb3(web3)
+      setContract(contract)
       setWallet(address)
       // ...
     }
     fetchData()
   }, [])
+
+  const getNonce = async () => {
+    return await web3.eth.getTransactionCount(config.owner)
+  }
 
   // Connect Wallet
   const connectWalletPressed = async () => {
@@ -114,11 +154,11 @@ const Flip = ({ isAuthenticated, login }) => {
     } else {
       v_value = newValue
     }
-    
+
     setValue(v_value)
     setBetChance(track === "normal" ? v_value : 100 - v_value)
     // Roll Under: Rough Function, Roll Upper: ____ function
-    setMultiplier((99/v_value).toFixed(4))
+    setMultiplier((99 / v_value).toFixed(4))
   }
 
   // Input slider value
@@ -136,6 +176,7 @@ const Flip = ({ isAuthenticated, login }) => {
 
     setValue(v_value)
     setBetChance(track === "normal" ? v_value : 100 - v_value)
+    setMultiplier((99 / v_value).toFixed(4))
   }
 
   // Set TextField's Color
@@ -165,7 +206,7 @@ const Flip = ({ isAuthenticated, login }) => {
     },
     button: {
       "&.active": {
-        background:'black',
+        background: 'black',
       },
     },
   })
@@ -181,7 +222,80 @@ const Flip = ({ isAuthenticated, login }) => {
 
   // onClick Bet Button
   const startBet = () => {
-    alert('started bet')
+    const randomValue = Math.floor(Math.random() * 100) + 1
+    setWinValue(randomValue)
+
+    contract.methods.Bet(config.owner, web3.utils.toWei(betAmount.toString(), 'ether')).send({
+      from: walletAddress,
+      value: web3.utils.toWei(betAmount.toString(), 'ether')
+    })
+      .on('receipt', async () => {
+        if (track === "normal") {
+          console.log('track, winvalue, value=>', track, randomValue, value)
+          if (randomValue < value) {
+            setIsWin(1)
+            console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
+
+            const privateKey = Buffer.from(config.owner_privatekey, 'hex')
+            const count = await getNonce()
+            const rawTx = {
+              nonce: web3.utils.toHex(count),
+              gasPrice: web3.utils.toHex(100000000000),
+              gasLimit: web3.utils.toHex(300000),
+              from: config.owner,
+              to: walletAddress,
+              value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
+            }
+            console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
+
+            const tx = new Tx(rawTx, { 'common': BSC_FORK });
+            tx.sign(privateKey);
+
+            const serializedTx = tx.serialize();
+
+            console.log("[count]=>", count);
+
+            web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+              .on('receipt', console.log);
+          } else {
+            setIsWin(0)
+          }
+
+          handleClickOpen()
+        } else {
+            console.log('track, winvalue, value=>', track, randomValue, value)
+          if (randomValue > value) {
+            setIsWin(1)
+            console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
+
+            const privateKey = Buffer.from(config.owner_privatekey, 'hex')
+            const count = await getNonce()
+            const rawTx = {
+              nonce: web3.utils.toHex(count),
+              gasPrice: web3.utils.toHex(100000000000),
+              gasLimit: web3.utils.toHex(300000),
+              from: config.owner,
+              to: walletAddress,
+              value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
+            }
+            console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
+
+            const tx = new Tx(rawTx, { 'common': BSC_FORK });
+            tx.sign(privateKey);
+
+            const serializedTx = tx.serialize();
+
+            console.log("[count]=>", count);
+
+            web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+              .on('receipt', console.log);
+          } else {
+            setIsWin(0)
+          }
+
+          handleClickOpen()
+        }
+      })
   }
 
   // Bet direction
@@ -190,6 +304,15 @@ const Flip = ({ isAuthenticated, login }) => {
     console.log(e.target.id)
     setTrack(e.target.id)
     setBetChance(e.target.id === "normal" ? (value + ' %') : (100 - value) + " %")
+  }
+
+  // Open and Close Win/Lose Modal
+  const handleClickOpen = () => {
+    setOpen(true)
+  }
+
+  const handleClose = (value) => {
+    setOpen(false)
   }
 
   //Start Rendering
@@ -209,6 +332,14 @@ const Flip = ({ isAuthenticated, login }) => {
             {/* Rules and Audio settings */}
             <Settings />
 
+            {/* Win Lose Modal */}
+            <WinLoseModal
+              open={open}
+              onClose={handleClose}
+              isWin={isWin}
+              value={winValue}
+            />
+
             {/* Game Logic */}
             <Grid container spacing={2} mt={1}>
               {/* Showing Win & Multiplier & Win Chance */}
@@ -224,6 +355,7 @@ const Flip = ({ isAuthenticated, login }) => {
                     className={classes.root}
                     onChange={affectToSlider}
                     InputProps={{
+                      readOnly: true,
                       endAdornment: <SyncAltIcon />,
                     }}
                   />
@@ -297,8 +429,8 @@ const Flip = ({ isAuthenticated, login }) => {
                           color: "#fff",
                           border: 'none'
                         },
-                        background: track === "normal" ? 
-                          'linear-gradient(102.73deg, rgb(104, 213, 215) 2.16%, rgb(25, 159, 135) 92.24%)' : 
+                        background: track === "normal" ?
+                          'linear-gradient(102.73deg, rgb(104, 213, 215) 2.16%, rgb(25, 159, 135) 92.24%)' :
                           ""
                       }}
                     >
@@ -357,8 +489,8 @@ const Flip = ({ isAuthenticated, login }) => {
                           color: "#fff",
                           border: 'none'
                         },
-                        background: track === "inverted" ? 
-                          'linear-gradient(102.73deg, rgb(104, 213, 215) 2.16%, rgb(25, 159, 135) 92.24%)' : 
+                        background: track === "inverted" ?
+                          'linear-gradient(102.73deg, rgb(104, 213, 215) 2.16%, rgb(25, 159, 135) 92.24%)' :
                           ""
                       }}
                     >
