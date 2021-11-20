@@ -28,8 +28,14 @@ import {
 import WinLoseModal from './WinLoseModal'
 
 import { config } from '../../../utils/config.js'
-// import EtherTx from 'ethereumjs-tx'
-// import { ethers } from 'ethers' 
+
+import win_effect from '../../../static/coinflip_win.wav'
+import lose_effect from '../../../static/coinflip_lose.wav'
+import space_effect from '../../../static/coinflip_space.wav'
+
+const Win = new Audio(win_effect)
+const Lose = new Audio(lose_effect)
+const Space = new Audio(space_effect)
 
 const Flip = ({ isAuthenticated, login }) => {
   const theme = useTheme()
@@ -55,11 +61,11 @@ const Flip = ({ isAuthenticated, login }) => {
   const [betAmount, setBetAmount] = useState(0.05)
   const [isWin, setIsWin] = useState(0)
   const [open, setOpen] = React.useState(false)
-
+  const [mute, setMute] = useState(false)
+  console.log('mute=>', mute)
   // For smart contract
   const [web3, setWeb3] = useState(undefined);
   const [contract, setContract] = useState(undefined);
-  // const [nonce, setNonce] = useState(undefined);
 
   useEffect(() => {
     async function fetchData() {
@@ -70,44 +76,12 @@ const Flip = ({ isAuthenticated, login }) => {
       // Connect Wallet
       const { address } = await getCurrentWalletConnected()
 
-      // Get Nonce
-      // const count = await web3.eth.getTransactionCount(config.owner)
-
       // Set states
       setWeb3(web3)
       setContract(contract)
       setWallet(address)
-      // setNonce(count)
     }
     fetchData()
-
-    // if (isWin === 1) {
-    //   console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
-
-    //   const privateKey = Buffer.from(config.owner_privatekey, 'hex')
-
-    //   const rawTx = {
-    //     nonce: web3.utils.toHex(nonce),
-    //     gasPrice: web3.utils.toHex(10000000000),
-    //     gasLimit: web3.utils.toHex(300000),
-    //     from: config.owner,
-    //     to: walletAddress,
-    //     value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
-    //   }
-    //   console.log(web3.utils.toHex(nonce), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
-
-    //   const tx = new Tx(rawTx, { 'common': BSC_FORK });
-    //   tx.sign(privateKey);
-
-    //   const serializedTx = tx.serialize();
-
-    //   console.log(serializedTx.toString('hex'));
-
-    //   web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
-    //     .on('receipt', console.log);
-
-    //     setIsWin(2)
-    // }
   }, [])
 
   const getNonce = async () => {
@@ -226,6 +200,8 @@ const Flip = ({ isAuthenticated, login }) => {
     })
       .on('receipt', async () => {
         console.log('receipt=>')
+        if (!mute) { Space.play() }
+
         let currentType = ''
         if (Math.random() <= 0.5) {
           setBetType('HEADS')
@@ -238,6 +214,7 @@ const Flip = ({ isAuthenticated, login }) => {
         if (selected === currentType) {
           setIsWin(1)
           console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
+          if (!mute) { Win.play() }
 
           const privateKey = Buffer.from(config.owner_privatekey, 'hex')
           const count = await getNonce()
@@ -262,6 +239,7 @@ const Flip = ({ isAuthenticated, login }) => {
             .on('receipt', console.log);
         } else {
           setIsWin(0)
+          if (!mute) { Lose.play() }
         }
         handleClickOpen()
       })
@@ -291,7 +269,7 @@ const Flip = ({ isAuthenticated, login }) => {
             }}
           >
             {/* Rules and Audio settings */}
-            <Settings />
+            <Settings mute={mute} setMute={setMute} />
 
             {/* Game Logic */}
             <Container maxWidth="lg">

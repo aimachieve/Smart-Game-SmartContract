@@ -31,6 +31,14 @@ import WinLoseModal from './WinLoseModal'
 
 import { config } from '../../../utils/config.js'
 
+import win_effect from '../../../static/dice_win.wav'
+import lose_effect from '../../../static/dice_lose.wav'
+import space_effect from '../../../static/dice_space.wav'
+
+const Win = new Audio(win_effect)
+const Lose = new Audio(lose_effect)
+const Space = new Audio(space_effect)
+
 const Flip = ({ isAuthenticated, login }) => {
   console.log('isAuthenticated:', isAuthenticated)
 
@@ -57,6 +65,7 @@ const Flip = ({ isAuthenticated, login }) => {
   const [isWin, setIsWin] = useState(0)
   const [open, setOpen] = React.useState(false)
   const [winValue, setWinValue] = React.useState('undefined')
+  const [mute, setMute] = useState(false)
 
   // For smart contract
   const [web3, setWeb3] = useState(undefined);
@@ -87,9 +96,9 @@ const Flip = ({ isAuthenticated, login }) => {
   }
 
   // Roll upper function
-   const getY = (x) => {
-    return -94.01/(x - 100)  + 0.0315
-   }
+  const getY = (x) => {
+    return -94.01 / (x - 100) + 0.0315
+  }
 
   // Connect Wallet
   const connectWalletPressed = async () => {
@@ -236,10 +245,14 @@ const Flip = ({ isAuthenticated, login }) => {
       value: web3.utils.toWei(betAmount.toString(), 'ether')
     })
       .on('receipt', async () => {
+        if (!mute) { Space.play() }
+        
         if (track === "normal") {
           console.log('track, winvalue, value=>', track, randomValue, value)
           if (randomValue < value) {
             setIsWin(1)
+
+            if (!mute) { Win.play() }
             console.log('amount=>', web3.utils.toWei((betAmount * multiplier * 0.98).toString(), 'ether'))
 
             const privateKey = Buffer.from(config.owner_privatekey, 'hex')
@@ -265,13 +278,15 @@ const Flip = ({ isAuthenticated, login }) => {
               .on('receipt', console.log);
           } else {
             setIsWin(0)
+            if (!mute) { Lose.play() }
           }
 
           handleClickOpen()
         } else {
-            console.log('track, winvalue, value=>', track, randomValue, value)
+          console.log('track, winvalue, value=>', track, randomValue, value)
           if (randomValue > value) {
             setIsWin(1)
+            if (!mute) { Win.play() }
             console.log('amount=>', web3.utils.toWei((betAmount * multiplier * 0.98).toString(), 'ether'))
 
             const privateKey = Buffer.from(config.owner_privatekey, 'hex')
@@ -297,6 +312,7 @@ const Flip = ({ isAuthenticated, login }) => {
               .on('receipt', console.log);
           } else {
             setIsWin(0)
+            if (!mute) { Lose.play() }
           }
 
           handleClickOpen()
@@ -309,7 +325,7 @@ const Flip = ({ isAuthenticated, login }) => {
     // setTrack(status)
     console.log(e.target.id)
     setTrack(e.target.id)
-    setBetChance(e.target.id === "normal" ? (value ) : (100 - value) )
+    setBetChance(e.target.id === "normal" ? (value) : (100 - value))
 
     // Roll Under: Rough Function y = 99/x, Roll Upper: ____y=x/5 function
     setMultiplier(e.target.id === "normal" ? (99 / value).toFixed(4) : getY(value).toFixed(4))
@@ -339,7 +355,7 @@ const Flip = ({ isAuthenticated, login }) => {
             }}
           >
             {/* Rules and Audio settings */}
-            <Settings />
+            <Settings mute={mute} setMute={setMute} />
 
             {/* Win Lose Modal */}
             <WinLoseModal

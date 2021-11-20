@@ -1,4 +1,4 @@
-import React, { useState, Fragment } from 'react'
+import React, { Fragment } from 'react'
 import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
 import { useTheme } from '@material-ui/core/styles'
@@ -18,21 +18,13 @@ import VolumeOffIcon from '@mui/icons-material/VolumeOff'
 import StorageIcon from '@mui/icons-material/Storage'
 import CloseIcon from '@mui/icons-material/Close'
 
-const Setting = ({ isAuthenticated }) => {
+const Setting = ({ isAuthenticated, mute, setMute }) => {
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
   console.log('isAuthenticated:', isAuthenticated)
   // State Values
-  const [mute, setMute] = useState(true)
   const [open, setOpen] = React.useState(false)
-
-  // Audio Action
-  const setAudio = () => {
-    console.log(mute)
-    setMute(!mute)
-    console.log(mute)
-  }
-
+  
   // Open Modal Action
   const handleClickOpen = () => {
     setOpen(true)
@@ -97,11 +89,12 @@ const Setting = ({ isAuthenticated }) => {
 
           {/* Mute Audio */}
           <IconButton
-            onClick={setAudio}
+            onClick={() => setMute(!mute)}
             sx={{ backgroundColor: 'rgba(255, 255, 255, 0.3)' }}
           >
-            {mute ? <VolumeUpIcon /> : <VolumeOffIcon />}
+            {!mute ? <VolumeUpIcon /> : <VolumeOffIcon />}
           </IconButton>
+
         </Box>
       </Stack>
 
