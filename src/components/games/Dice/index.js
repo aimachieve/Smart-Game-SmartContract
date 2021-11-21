@@ -70,6 +70,7 @@ const Flip = ({ isAuthenticated, login }) => {
   const [web3, setWeb3] = useState(undefined);
   const [contract, setContract] = useState(undefined);
   const [chainId, setChainId] = useState(undefined);
+  console.log(chainId)
 
   useEffect(() => {
     async function fetchData() {
