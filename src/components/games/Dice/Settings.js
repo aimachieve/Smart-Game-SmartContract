@@ -21,7 +21,6 @@ import CloseIcon from '@mui/icons-material/Close'
 const Setting = ({ isAuthenticated, mute, setMute }) => {
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
-  console.log('isAuthenticated:', isAuthenticated)
   // State Values
   const [open, setOpen] = React.useState(false)
 
@@ -88,7 +87,7 @@ const Setting = ({ isAuthenticated, mute, setMute }) => {
 
           {/* Mute Audio */}
           <IconButton
-            onClick={ () => setMute }
+            onClick={ () => setMute(!mute) }
             sx={{ backgroundColor: 'rgba(255, 255, 255, 0.3)' }}
           >
             {!mute ? <VolumeUpIcon /> : <VolumeOffIcon />}

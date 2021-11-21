@@ -40,7 +40,6 @@ const Lose = new Audio(lose_effect)
 const Space = new Audio(space_effect)
 
 const Flip = ({ isAuthenticated, login }) => {
-  console.log('isAuthenticated:', isAuthenticated)
 
   const Tx = require("ethereumjs-tx").Transaction
   const Common = require('ethereumjs-common').default
@@ -70,6 +69,7 @@ const Flip = ({ isAuthenticated, login }) => {
   // For smart contract
   const [web3, setWeb3] = useState(undefined);
   const [contract, setContract] = useState(undefined);
+  const [chainId, setChainId] = useState(undefined);
 
   useEffect(() => {
     async function fetchData() {
@@ -79,8 +79,11 @@ const Flip = ({ isAuthenticated, login }) => {
       // Connect Wallet
       const { address } = await getCurrentWalletConnected()
 
-      // Get Nonce
-      // const count = await web3.eth.getTransactionCount(config.owner)
+      // Get Chain ID
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      // handleChainChanged(chainId);
+      console.log(chainId)
+      setChainId(chainId)
 
       // Set states
       setWeb3(web3)
@@ -246,7 +249,7 @@ const Flip = ({ isAuthenticated, login }) => {
     })
       .on('receipt', async () => {
         if (!mute) { Space.play() }
-        
+
         if (track === "normal") {
           console.log('track, winvalue, value=>', track, randomValue, value)
           if (randomValue < value) {

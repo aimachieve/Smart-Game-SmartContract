@@ -18,7 +18,6 @@ const Navbar = ({ auth: { isAuthenticated }, login, logout }) => {
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
   // const isOffset = useOffSetTop(100)
 
-  console.log(isAuthenticated)
   //State variables
   const [walletAddress, setWallet] = useState('')
 

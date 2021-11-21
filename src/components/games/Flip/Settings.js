@@ -17,11 +17,10 @@ import VolumeUpIcon from '@mui/icons-material/VolumeUp'
 import VolumeOffIcon from '@mui/icons-material/VolumeOff'
 import StorageIcon from '@mui/icons-material/Storage'
 import CloseIcon from '@mui/icons-material/Close'
-
+ 
 const Setting = ({ isAuthenticated, mute, setMute }) => {
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'))
-  console.log('isAuthenticated:', isAuthenticated)
   // State Values
   const [open, setOpen] = React.useState(false)
   

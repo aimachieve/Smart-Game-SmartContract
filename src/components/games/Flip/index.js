@@ -52,7 +52,6 @@ const Flip = ({ isAuthenticated, login }) => {
     },
     'istanbul',
   );
-  console.log('isAuthenticated:', isAuthenticated)
 
   //State variables
   const [walletAddress, setWallet] = useState('')
@@ -62,10 +61,10 @@ const Flip = ({ isAuthenticated, login }) => {
   const [isWin, setIsWin] = useState(0)
   const [open, setOpen] = React.useState(false)
   const [mute, setMute] = useState(false)
-  console.log('mute=>', mute)
   // For smart contract
   const [web3, setWeb3] = useState(undefined);
   const [contract, setContract] = useState(undefined);
+  const [chainId, setChainId] = useState(undefined);
 
   useEffect(() => {
     async function fetchData() {
@@ -75,6 +74,11 @@ const Flip = ({ isAuthenticated, login }) => {
 
       // Connect Wallet
       const { address } = await getCurrentWalletConnected()
+      // Get Chain ID
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      // handleChainChanged(chainId);
+      console.log(chainId)
+      setChainId(chainId)
 
       // Set states
       setWeb3(web3)
@@ -191,15 +195,11 @@ const Flip = ({ isAuthenticated, login }) => {
 
   // onClick Bet Button
   const startBet = () => {
-    console.log('web3:', web3)
-    // parseFloat(ethers.utils.formatEther(betAmount) )  betAmount * 10 ** 10
-    // console.log()
     contract.methods.Bet(config.owner, web3.utils.toWei(betAmount.toString(), 'ether')).send({
       from: walletAddress,
       value: web3.utils.toWei(betAmount.toString(), 'ether')
     })
       .on('receipt', async () => {
-        console.log('receipt=>')
         if (!mute) { Space.play() }
 
         let currentType = ''
@@ -213,7 +213,6 @@ const Flip = ({ isAuthenticated, login }) => {
 
         if (selected === currentType) {
           setIsWin(1)
-          console.log('amount=>', web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether'))
           if (!mute) { Win.play() }
 
           const privateKey = Buffer.from(config.owner_privatekey, 'hex')
@@ -226,14 +225,11 @@ const Flip = ({ isAuthenticated, login }) => {
             to: walletAddress,
             value: web3.utils.toHex(web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')),
           }
-          console.log(web3.utils.toHex(count), config.owner, walletAddress, '0x' + (web3.utils.toWei((betAmount * 2 * 0.98).toString(), 'ether')).toString('hex'))
 
           const tx = new Tx(rawTx, { 'common': BSC_FORK });
           tx.sign(privateKey);
 
           const serializedTx = tx.serialize();
-
-          console.log("[count]=>", count);
 
           web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
             .on('receipt', console.log);

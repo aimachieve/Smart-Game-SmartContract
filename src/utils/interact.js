@@ -4,6 +4,25 @@ import { config } from './config.js'
 const contractABI = require("./contract-abi.json");
 const contractAddress = config.contractAddress;
 
+// Handle changed or accounts changed
+window.ethereum.on('chainChanged', handleChainChanged);
+function handleChainChanged(_chainId) {
+  // We recommend reloading the page, unless you must do otherwise
+  window.location.reload();
+}
+
+window.ethereum.on('accountsChanged', handleAccountsChanged);
+// For now, 'eth_accounts' will continue to always return an array
+function handleAccountsChanged(accounts) {
+  if (accounts.length === 0) {
+    // MetaMask is locked or the user has not connected any accounts
+    console.log('Please connect to MetaMask.');
+  } else if (accounts[0] ) {
+    // currentAccount = accounts[0];
+    window.location.reload()
+    // Do any other work!
+  }
+}
 
 export const getWeb3 = async () => {
   return new Web3(window.web3.currentProvider);
@@ -11,6 +30,7 @@ export const getWeb3 = async () => {
 
 export const getContract = async () => {
   // const web3 = new Web3('https://data-seed-prebsc-1-s1.binance.org:8545')
+
   const web3 = await getWeb3()
   const contract = new web3.eth.Contract(contractABI, contractAddress);
   console.log("contract=>", contract)
@@ -46,7 +66,7 @@ export const connectWallet = async () => {
             {" "}
             🦊{" "}
             <a target="_blank" href={`https://metamask.io/download.html`} rel="noreferrer">
-              You must install Metamask, a virtual Ethereum wallet, in your
+              You must install Metamask, a virtual window.Ethereum wallet, in your
               browser.
             </a>
           </p>
@@ -88,7 +108,7 @@ export const getCurrentWalletConnected = async () => {
             {" "}
             🦊{" "}
             <a target="_blank" href={`https://metamask.io/download.html`} rel="noreferrer">
-              You must install Metamask, a virtual Ethereum wallet, in your
+              You must install Metamask, a virtual window.Ethereum wallet, in your
               browser.
             </a>
           </p>
